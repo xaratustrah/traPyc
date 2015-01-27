@@ -6,3 +6,5 @@ a word play between (ion) traffic and Python. Currently only linear elements are
 
 The input lattice file is just text file containing rows of elements. Future imports from other optics programs like MIRKO and MADX are planned.
 
+![image](wille_fodo.png)
+

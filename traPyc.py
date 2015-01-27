@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 An optics calculator for circular accelerator machines such as synchrotrons and storage rings.
 
@@ -10,6 +11,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from scipy.interpolate import spline
 
 
 class Component:
@@ -79,7 +81,7 @@ class Component:
             return np.zeros((5, 5))
         psi = np.deg2rad(psi)
         return np.array([[1, 0, 0, 0, 0],
-                         [np.tan(psi / R), 1, 0, 0, 0],
+                         [np.tan(psi) / R, 1, 0, 0, 0],
                          [0, 0, 1, 0, 0],
                          [0, 0, -np.tan(psi) / R, 1, 0],
                          [0, 0, 0, 0, 1]])
@@ -159,6 +161,7 @@ class Cell:
                        [0, 0, 0, 0, 1]
         ])
 
+        print("BEEEETTTAAA {}, {}".format(beta_x_0, beta_y_0))
         number = len(self.component_list)
         beta_x_list, beta_y_list, position_list = [0] * (number + 1), [0] * (number + 1), [0] * (number + 1)
 
@@ -176,7 +179,10 @@ class Cell:
 
         for i in range(number):
             M = self.component_list[i].mat
+            print('')
             print(self.component_list[i].name)
+            print("Before Matrix: Position: {}, beta_x: {}".format(position_list[i],
+                                                                   beta_x_list[i]))
             print(M)
             position += self.component_list[i].length
             B = np.dot(np.dot(M, B), M.T)
@@ -184,16 +190,27 @@ class Cell:
             beta_y_list[i + 1] = B[2][2]
             position_list[i + 1] = position
             # if i > 3: break
-            print("{} {}".format(position_list[i], beta_x_list[i]))
+            print("After Matrix: Position: {}, beta_x: {}".format(position_list[i + 1],
+                                                                  beta_x_list[i + 1]))
 
         return position_list, beta_x_list, beta_y_list
 
     def plot_cell(self):
         pos, bx, by = self.evolve_beta()
+
+        bx = np.asarray(bx)
+        by = np.asarray(by)
+        pos = np.asarray(pos)
+
+        pos_smooth = np.linspace(pos.min(), pos.max(), 200)
+        bx_smooth = spline(pos, bx, pos_smooth)
+        by_smooth = spline(pos, by, pos_smooth)
+
         plt.xlabel('s [m]')
-        plt.plot(pos, bx, label='beta_x', color=self.gruen, linewidth=2)
+        plt.plot(pos, bx, label='beta_x', color=self.gruen, linewidth=2, marker='o')
+        plt.plot(pos, by, label='beta_y', color=self.rot, linewidth=2, marker='o')
         ax1 = plt.gca()
-        ax1.set_ylabel('beta_x [m]', color=self.gruen)
+        ax1.set_ylabel('beta [m]')
 
         line = plt.gca().get_lines()[0]
         maximum = int(line.get_ydata().max()) - 1
@@ -217,17 +234,19 @@ class Cell:
             cnt = cnt + self.length_list[i]
             plt.gca().add_patch(rect)
 
-        ax2 = ax1.twinx()
-        ax2.plot(pos, by, label='beta_y', color=self.rot, linewidth=2)
-        ax2.set_ylabel('beta_y [m]', color=self.rot)
+        # ax2 = ax1.twinx()
+        # ax2.plot(pos, by, label='beta_y', color=self.rot, linewidth=2,  marker='o')
+        # ax2.set_ylabel('beta_y [m]', color=self.rot)
         plt.grid(True)
         plt.title(self.title)
 
-        plt.show()
+        # plt.show()
+        plt.savefig(os.path.splitext(self.filename)[0] + '.png')
         plt.savefig(os.path.splitext(self.filename)[0] + '.pdf')
 
 
 if __name__ == "__main__":
     c = Cell('wille_fodo.lat')
     print(c.total_matrix())
+    # c.evolve_beta()
     c.plot_cell()
