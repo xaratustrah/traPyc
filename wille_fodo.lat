@@ -1,0 +1,15 @@
+#Example FODO Cell Wille page 99
+#typ    name	len	    strngth	param
+qf	    qf1	    0.2	    -1.2	0
+d	    drf1	0.55	0	    0
+eb	    edg	    0	    3.8197  11.25
+b	    dip1	1.5	    3.8197	0
+eb	    edg	    0	    3.8197	11.25
+d	    drf2	0.55	0	    0
+qd	    qd1     0.4	    1.2     0
+d	    drf3	0.55	0	    0
+eb	    edg 	0	    3.8197	11.25
+b	    dip2	1.5	    3.8197	0
+eb	    edge	0	    3.8197	11.25
+d	    drf3	0.55	0       0
+qf	    qf2	    0.2	    -1.2	0

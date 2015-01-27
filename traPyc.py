@@ -110,6 +110,8 @@ class Cell:
             self.length_list.append(c.length)
             self.length_list_sum.append(self.length_list_sum[i] + c.length)
 
+            # self.length_list_sum = self.make_unique(self.length_list_sum)  # take out duplicates by converting to set and back
+
     def beta_a_x(self, m):
         return np.sqrt(-(m[0][1] * m[1][1]) / (m[1][0] * m[0][0]))
 
@@ -135,10 +137,61 @@ class Cell:
             m = np.dot(m, self.component_list[i].mat)
         return m
 
+    def make_unique(self, seq):
+        seen = set()
+        seen_add = seen.add
+        return [x for x in seq if not (x in seen or seen_add(x))]
+
+    def evolve_beta(self):
+        Mcell = self.total_matrix()
+        # starting at symmetry point, where gradient of beta is zero, i.e. alpha=0 and therefore gamma = 1/beta
+        beta_x_0 = self.beta_a_x(Mcell)
+        beta_y_0 = self.beta_a_y(Mcell)
+        alpha_x_0 = 0
+        alpha_y_0 = 0
+        gamma_x_0 = (1 + alpha_x_0 ** 2) / beta_x_0
+        gamma_y_0 = (1 + alpha_y_0 ** 2) / beta_y_0
+
+        B0 = np.array([[beta_x_0, -alpha_x_0, 0, 0, 0],
+                       [-alpha_x_0, gamma_x_0, 0, 0, 0],
+                       [0, 0, beta_y_0, -alpha_y_0, 0],
+                       [0, 0, -alpha_y_0, gamma_y_0, 0],
+                       [0, 0, 0, 0, 1]
+        ])
+
+        number = len(self.component_list)
+        beta_x_list, beta_y_list, position_list = [0] * (number + 1), [0] * (number + 1), [0] * (number + 1)
+
+        # fill out the first and last elements
+
+        beta_x_list[0] = self.beta_a_x(Mcell)
+        beta_y_list[0] = self.beta_a_y(Mcell)
+        beta_x_list[number] = self.beta_b_x(Mcell)
+        beta_y_list[number] = self.beta_b_y(Mcell)
+
+        position = 0
+        position_list[0] = position
+
+        B = B0  # make a running variable
+
+        for i in range(number):
+            M = self.component_list[i].mat
+            print(self.component_list[i].name)
+            print(M)
+            position += self.component_list[i].length
+            B = np.dot(np.dot(M, B), M.T)
+            beta_x_list[i + 1] = B[0][0]
+            beta_y_list[i + 1] = B[2][2]
+            position_list[i + 1] = position
+            # if i > 3: break
+            print("{} {}".format(position_list[i], beta_x_list[i]))
+
+        return position_list, beta_x_list, beta_y_list
+
     def plot_cell(self):
-        bx, by = self.evolve_beta()
+        pos, bx, by = self.evolve_beta()
         plt.xlabel('s [m]')
-        plt.plot(self.length_list_sum, bx, label='beta_x', color=self.gruen, linewidth=2)
+        plt.plot(pos, bx, label='beta_x', color=self.gruen, linewidth=2)
         ax1 = plt.gca()
         ax1.set_ylabel('beta_x [m]', color=self.gruen)
 
@@ -165,7 +218,7 @@ class Cell:
             plt.gca().add_patch(rect)
 
         ax2 = ax1.twinx()
-        ax2.plot(self.length_list_sum, by, label='beta_y', color=self.rot, linewidth=2)
+        ax2.plot(pos, by, label='beta_y', color=self.rot, linewidth=2)
         ax2.set_ylabel('beta_y [m]', color=self.rot)
         plt.grid(True)
         plt.title(self.title)
@@ -173,22 +226,8 @@ class Cell:
         plt.show()
         plt.savefig(os.path.splitext(self.filename)[0] + '.pdf')
 
-    def evolve_beta(self):
-        Bx0 = self.beta_a_x(self.total_matrix())
-        By0 = self.beta_a_y(self.total_matrix())
-        B0 = np.array([[Bx0, 0, 0, 0, 0],
-                       [0, 1 / Bx0, 0, 0, 0],
-                       [0, 0, By0, 0, 0],
-                       [0, 0, 0, 1 / By0, 0],
-                       [0, 0, 0, 0, 1]
-        ])
-        B = B0
-        beta_x_list, beta_y_list = [], []
-        for i in range(len(self.component_list)):
-            M = self.component_list[i].mat
-            B = np.dot(np.dot(M, B), M.T)
-            beta_x_list.append(B[0][0])
-            beta_y_list.append(B[3][3])
-        beta_x_list.append(self.beta_b_x(self.total_matrix()))
-        beta_y_list.append(self.beta_b_y(self.total_matrix()))
-        return beta_x_list, beta_y_list
+
+if __name__ == "__main__":
+    c = Cell('wille_fodo.lat')
+    print(c.total_matrix())
+    c.plot_cell()
