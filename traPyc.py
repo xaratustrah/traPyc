@@ -11,7 +11,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from scipy.interpolate import spline
+from scipy.interpolate import interp1d
 
 
 class Component:
@@ -183,6 +183,8 @@ class Cell:
             print(self.component_list[i].name)
             print("Before Matrix: Position: {}, beta_x: {}".format(position_list[i],
                                                                    beta_x_list[i]))
+            print(B)
+            print('')
             print(M)
             position += self.component_list[i].length
             B = np.dot(np.dot(M, B), M.T)
@@ -201,14 +203,20 @@ class Cell:
         bx = np.asarray(bx)
         by = np.asarray(by)
         pos = np.asarray(pos)
+        pos[0] = 1e-10
 
-        pos_smooth = np.linspace(pos.min(), pos.max(), 200)
-        bx_smooth = spline(pos, bx, pos_smooth)
-        by_smooth = spline(pos, by, pos_smooth)
+        # fbx = interp1d(pos, bx, kind='cubic')
+        # fby = interp1d(pos, by, kind='cubic')
+        # pos_smooth = np.linspace(min(pos), max(pos), 200)
+        #bx_smooth = spline(pos, bx, pos_smooth)
+        #by_smooth = spline(pos, by, pos_smooth)
+
+        #plt.plot(pos_smooth, fbx(pos_smooth), 'o', pos, bx, '--')
+        #plt.plot(pos_smooth, fby(pos_smooth), 'o', pos, by, '--')
+        #plt.plot(pos, bx, label='beta_x', color=self.gruen, linewidth=2, marker='o')
+        plt.plot(pos, by, label='beta_y', color=self.rot, linewidth=2, marker='o')
 
         plt.xlabel('s [m]')
-        plt.plot(pos, bx, label='beta_x', color=self.gruen, linewidth=2, marker='o')
-        plt.plot(pos, by, label='beta_y', color=self.rot, linewidth=2, marker='o')
         ax1 = plt.gca()
         ax1.set_ylabel('beta [m]')
 
@@ -241,7 +249,7 @@ class Cell:
         plt.title(self.title)
 
         # plt.show()
-        plt.savefig(os.path.splitext(self.filename)[0] + '.png')
+        plt.savefig(os.path.splitext(self.filename)[0] + '.png', dpi=300)
         plt.savefig(os.path.splitext(self.filename)[0] + '.pdf')
 
 
