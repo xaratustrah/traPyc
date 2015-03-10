@@ -2,8 +2,8 @@ traPyc
 ======
 
 **traPyc** is an optics calculator for circular accelerator machines such as synchrotrons and storage rings written in Python. The name is
-a word play between (ion) traffic and Python. Currently only linear elements are supported. The calculations are done in full matrices.
-Currently only linear operations are supported. Optical elements are drawn as well as the beta functions.
+a word play between (ion) traffic and Python. Currently only linear elements are supported. The calculations are done in full matrices. Optical 
+elements are drawn as well as the beta functions.
 
 ![image](wille_fodo.png)
 
